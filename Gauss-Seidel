@@ -1,0 +1,154 @@
+"""
+Created on Mon Sep 27 21:39:23 2021
+
+Programa que da solución a sistemas de ecuaciones que formen matrices cuadradas 
+de cualquier tamaño, usando funciones Gauss-Seidel, con lectura de archivos y 
+realizando el pivoteo por filas y columnas.
+
+Hecho por Diana Victoria Morales Tavera y Aranza Moreno Sarabia.
+"""
+
+'''
+De ejemplo vamos a resolver
+6.0 7.0 8.0 = 9.0
+-1.0 4.0 2.0 = 2.0
+-3.0 7.0 -4.0 = -13.0
+'''
+import numpy as np
+import sys
+
+#Definimos los elementos del ejemplo
+A = []
+#b tiene los resulados de las ecuaciones
+b = []
+
+#Función que determina si una matriz es o no cuadrada
+def matriz_cd(matr):
+    if len(matr) != len(matr[0]):
+        print("Esta matriz no es cuadrada, ingrese una matriz que lo sea.")
+        sys.exit()
+    else:
+        print("\nLa matriz es cuadrada, el sistema se puede resolver con funciones Gauss-Seidel.")  
+
+#Funciones que leen el archivo (read_inp y read_sist)
+def read_inp(text):
+    A_tem, b_tem = text.strip().split("=")
+    b_tem = eval(b_tem.strip(" "))
+    A_tem = A_tem[:-1]
+    #Se separan los coeficientes con espacios y luego se evalúan
+    A_tem = [eval(i) for i in A_tem.split()]
+    return A_tem, b_tem
+    
+def read_sist(path):
+    #Comando "with" lee el archivo donde se encuentran los valores de la matriz
+    #Ponemos la dirección del archivo dentro del "open", en este caso usamos path
+    #"sist" es el nombre que asignamos al archivo en el código
+    with open(path, "r") as sist:
+        flag=0
+        for line in sist:
+            if line.strip() != "X":
+                pass
+            else:
+                flag=1
+                continue
+            if line == "Y":
+                break
+            if flag==1:
+                aux1, aux2 = read_inp(line)
+                A.append(aux1)
+                b.append(aux2)
+    return A, b
+#Ruta que contiene el archivo
+ruta_sist = "C:/Users/Diana Tavera/Documents/Ejemplo.txt"
+coefs, b = read_sist(ruta_sist)
+
+#FUNCIÓN GAUSS-SEIDEL
+
+#USANDO NUMPY#
+
+#Definimos los elementos del ejemplo
+A_2 = np.array(coefs)
+matriz_cd(A_2)
+#b_2 tiene los resulados de las ecuaciones
+b_2 = np.array(b)
+
+n=len(A_2[0])
+#Solución básica inicial
+x_np = np.zeros(n) 
+#Definimos algunos elementos para auxiliarnos en los cálculos
+aux_np = np.ones(n)
+
+#Definimos un umbral del error
+umbral = 0.0001
+
+#Definimos el número de iteraciones
+itermx = 100000
+    
+def Solu_2(A_np,b_np):
+    #Repetimos hasta convergencia o 100,000 iteraciones
+    for i in range(itermx):
+        for i in range(n):
+            aux_np[i] = 0.0
+            x_np[i] = (b_np[i] - np.sum(x_np*aux_np*A_np[i,:]))/A_np[i][i]
+            aux_np[i] = 1.0
+    
+        current_b = np.dot(A_np,x_np)
+        error = np.sum(np.abs(current_b-b_np))
+    
+        if error < umbral:
+            return x_np;
+    else:
+        print("Aproximación del resultado: {:.7f}".format(x_np))
+
+
+#PIVOTEO#
+#Pivoteo por filas (parcial)
+def pivoteo_filas(Z, Y):
+#Pivoteo parcial por filas. Variables para indicar el tamaño de la matriz:
+    t = np.shape(Z)
+    n = t[0]
+    for i in range(0,n-1,1):
+        colZ = abs(Z[i:,i])
+        #Valor máximo por fila recorriendo columnas:
+        maxZ = np.argmax(colZ)
+#Método de la burbuja para intercambiar filas de mayor a menor: 
+#Se hace el cambio con base en el máximo de cada fila.
+        if(maxZ != 0):
+            aux = np.copy(Z[i,:])
+            Z[i,:] = Z[maxZ+i,:]
+            Z[maxZ+i,:] = aux
+            print("A =", Z)
+            auxY = np.copy(Y[i])
+            Y[i] = Y[maxZ+i]
+            Y[maxZ+i] = auxY
+            print("b =", Y)
+        return Z, Y
+    
+def pivoteo_columnas(Z, Y):
+#Pivoteo parcial por columnas. Variables para indicar el tamaño de la matriz:
+    t = np.shape(Z)
+    n = t[0]
+    for i in range(0,n-1,1):
+        filaZ = abs(Z[i:,i])
+        #Valor máximo por columnas recorriendo filas:
+        maxZ = np.argmax(filaZ)
+#Método de la burbuja para intercambiar columnas de mayor a menor: 
+#Se hace el cambio con base en el máximo de cada fila.
+        if(maxZ != 0):
+            aux = np.copy(Z[:,i])
+            Z[:,i] = Z[:,maxZ+i]
+            Z[:,maxZ+i] = aux
+            print("A =", Z)
+            auxY = np.copy(Y[i])
+            Y[i] = [maxZ+i]
+            Y[maxZ+i] = auxY
+            print("b =", Y)
+        return Z, Y
+
+#Imprimimos resultado en pantalla   
+print("Solución con pivoteo en filas: ")    
+print(pivoteo_filas(A_2,b_2 ))
+print("\n")
+print("Solución con pivoteo en columnas: ")    
+print(pivoteo_columnas(A_2,b_2 ))
+print("\n")
